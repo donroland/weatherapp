@@ -1,104 +1,86 @@
 import {
     getWeatherByCity
 } from "./apiService.js";
+import {
+    mapListToDOMElements
+} from "./DOMActions.js";
 
-const viewElements = {};
-
-const getDOMElement = id => document.getElementById(id);
-
-const connectHTMLElements = () => {
-    viewElements.mainContainer = getDOMElement("mainContainer");
-    viewElements.weatherSearchView = getDOMElement("weatherSearchView");
-    viewElements.weatherForecastView = getDOMElement("weatherForecastView");
-
-    viewElements.searchInput = getDOMElement("searchInput");
-    viewElements.searchButton = getDOMElement("searchButton");
-    viewElements.weatherCityContainer = getDOMElement("weatherCityContainer");
-
-    viewElements.weatherCity = getDOMElement("weatherCity");
-    viewElements.weatherIcon = getDOMElement("weatherIcon");
-
-    viewElements.weatherCurrentTemp = getDOMElement("weatherCurrentTemp");
-    viewElements.weatherMaxTemp = getDOMElement("weatherMaxTemp");
-    viewElements.weatherMinTemp = getDOMElement("weatherMinTemp");
-
-    viewElements.returnToSearchBtn = getDOMElement("returnToSearchBtn");
-};
-
-const setupListeners = () => {
-    viewElements.searchInput.addEventListener("keydown", onEnterSubmit);
-    viewElements.searchButton.addEventListener("click", onClickSubmit);
-    viewElements.returnToSearchBtn.addEventListener("click", returnToSearch);
-};
-
-const initializeApp = () => {
-    connectHTMLElements();
-    setupListeners();
-};
-
-const onEnterSubmit = event => {
-    if (event.key === "Enter") {
-        fadeInOut();
-        let query = viewElements.searchInput.value;
-        getWeatherByCity(query).then(data => {
-            displayWeatherData(data);
-        });
+class WeatherApp {
+    constructor() {
+        this.viewElements = {};
+        this.initializeApp();
     };
-};
 
-const onClickSubmit = () => {
-    fadeInOut();
-    let query = viewElements.searchInput.value;
-    getWeatherByCity(query).then(data => {
-        displayWeatherData(data);
-    });
-};
-
-const displayWeatherData = data => {
-    switchView();
-    fadeInOut();
-
-    const weather = data.consolidated_weather[0];
-
-    viewElements.weatherCity.innerText = data.title;
-    viewElements.weatherIcon.src = `https://www.metaweather.com/static/img/weather/${weather.weather_state_abbr}.svg`;
-    viewElements.weatherIcon.alt = weather.weather_state_name;
-
-    const currentTemp = weather.the_temp.toFixed(2);
-    const maxTemp = weather.max_temp.toFixed(2);
-    const minTemp = weather.min_temp.toFixed(2);
-
-    viewElements.weatherCurrentTemp.innerText = `Current temperature: ${currentTemp}`;
-    viewElements.weatherMaxTemp.innerText = `Max temperature ${maxTemp}`;
-    viewElements.weatherMinTemp.innerText = `Min temperature ${minTemp}`;
-
-}
-
-const fadeInOut = () => {
-    if (viewElements.mainContainer.style.opacity === "1" || viewElements.mainContainer.style.opacity === "") {
-        viewElements.mainContainer.style.opacity = "0";
-    } else {
-        viewElements.mainContainer.style.opacity = "1";
+    initializeApp = () => {
+        this.connectHTMLElements();
+        this.setupListeners();
     }
+
+    connectHTMLElements = () => {
+        const listOfIds = Array.from(document.querySelectorAll("[id]")).map(element => element.id);
+        this.viewElements = mapListToDOMElements(listOfIds);
+    };
+
+    setupListeners = () => {
+        this.viewElements.searchInput.addEventListener("keydown", this.handleSubmit);
+        this.viewElements.searchButton.addEventListener("click", this.handleSubmit);
+        this.viewElements.returnToSearchBtn.addEventListener("click", this.returnToSearch);
+    };
+
+    handleSubmit = () => {
+        if (event.type === "click" || event.key === "Enter") {
+            this.fadeInOut();
+            let query = this.viewElements.searchInput.value;
+            getWeatherByCity(query).then(data => {
+                this.displayWeatherData(data);
+            });
+        }
+    };
+
+    fadeInOut = () => {
+        if (this.viewElements.mainContainer.style.opacity === "1" || this.viewElements.mainContainer.style.opacity === "") {
+            this.viewElements.mainContainer.style.opacity = "0";
+        } else {
+            this.viewElements.mainContainer.style.opacity = "1";
+        }
+    };
+    
+    switchView = () => {
+        if (this.viewElements.weatherSearchView.style.display !== "none") {
+            this.viewElements.weatherSearchView.style.display = "none";
+            this.viewElements.weatherForecastView.style.display = "block";
+        } else {
+            this.viewElements.weatherForecastView.style.display = "none";
+            this.viewElements.weatherSearchView.style.display = "flex";
+        }
+    };
+
+     returnToSearch = () => {
+        this.fadeInOut();
+        setTimeout(() => {
+            this.switchView();
+            this.fadeInOut();
+        }, 500);
+    };
+
+    displayWeatherData = data => {
+        this.switchView();
+        this.fadeInOut();
+    
+        const weather = data.consolidated_weather[0];
+    
+        this.viewElements.weatherCity.innerText = data.title;
+        this.viewElements.weatherIcon.src = `https://www.metaweather.com/static/img/weather/${weather.weather_state_abbr}.svg`;
+        this.viewElements.weatherIcon.alt = weather.weather_state_name;
+    
+        const currentTemp = weather.the_temp.toFixed(2);
+        const maxTemp = weather.max_temp.toFixed(2);
+        const minTemp = weather.min_temp.toFixed(2);
+    
+        this.viewElements.weatherCurrentTemp.innerText = `Current temperature: ${currentTemp}`;
+        this.viewElements.weatherMaxTemp.innerText = `Max temperature ${maxTemp}`;
+        this.viewElements.weatherMinTemp.innerText = `Min temperature ${minTemp}`;
+    };
 }
 
-const switchView = () => {
-    if (viewElements.weatherSearchView.style.display !== "none") {
-        viewElements.weatherSearchView.style.display = "none";
-        viewElements.weatherForecastView.style.display = "block";
-    } else {
-        viewElements.weatherForecastView.style.display = "none";
-        viewElements.weatherSearchView.style.display = "flex";
-    }
-};
-
-const returnToSearch = () => {
-    fadeInOut();
-
-    setTimeout(() => {
-        switchView();
-        fadeInOut();
-    }, 500);
-}
-
-document.addEventListener("DOMContentLoaded", initializeApp);
+document.addEventListener("DOMContentLoaded", new WeatherApp());
