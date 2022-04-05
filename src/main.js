@@ -27,13 +27,17 @@ class WeatherApp {
         this.viewElements.returnToSearchBtn.addEventListener("click", this.returnToSearch);
     };
 
-    handleSubmit = () => {
+    handleSubmit = (event) => {
         if (event.type === "click" || event.key === "Enter") {
             this.fadeInOut();
             let query = this.viewElements.searchInput.value;
             getWeatherByCity(query).then(data => {
                 this.displayWeatherData(data);
-            });
+                this.viewElements.searchInput.style.borderColor = "black";
+            }).catch((error) => {
+                this.fadeInOut();
+                this.viewElements.searchInput.style.borderColor = "red";
+            })
         }
     };
 
@@ -44,7 +48,7 @@ class WeatherApp {
             this.viewElements.mainContainer.style.opacity = "1";
         }
     };
-    
+
     switchView = () => {
         if (this.viewElements.weatherSearchView.style.display !== "none") {
             this.viewElements.weatherSearchView.style.display = "none";
@@ -55,7 +59,7 @@ class WeatherApp {
         }
     };
 
-     returnToSearch = () => {
+    returnToSearch = () => {
         this.fadeInOut();
         setTimeout(() => {
             this.switchView();
@@ -66,17 +70,17 @@ class WeatherApp {
     displayWeatherData = data => {
         this.switchView();
         this.fadeInOut();
-    
+
         const weather = data.consolidated_weather[0];
-    
+
         this.viewElements.weatherCity.innerText = data.title;
         this.viewElements.weatherIcon.src = `https://www.metaweather.com/static/img/weather/${weather.weather_state_abbr}.svg`;
         this.viewElements.weatherIcon.alt = weather.weather_state_name;
-    
+
         const currentTemp = weather.the_temp.toFixed(2);
         const maxTemp = weather.max_temp.toFixed(2);
         const minTemp = weather.min_temp.toFixed(2);
-    
+
         this.viewElements.weatherCurrentTemp.innerText = `Current temperature: ${currentTemp}`;
         this.viewElements.weatherMaxTemp.innerText = `Max temperature ${maxTemp}`;
         this.viewElements.weatherMinTemp.innerText = `Min temperature ${minTemp}`;
